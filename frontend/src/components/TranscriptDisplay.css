@@ -1,0 +1,15 @@
+
+.transcript-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 35vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.transcript-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  padding-right: 6px;
+}

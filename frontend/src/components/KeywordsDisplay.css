@@ -1,0 +1,46 @@
+
+.keywords-panel {
+  max-height: 35vh;
+  overflow: hidden;
+}
+
+
+.keywords-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: none;
+}
+
+.keyword-tag {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: radial-gradient(circle at top left, #5cf2ff, #8f7aff);
+  color: #050608;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.keywords-placeholder {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+@keyframes keywordFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.75);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fade-in-tag {
+  animation: keywordFadeIn 750ms ease-out;
+}
