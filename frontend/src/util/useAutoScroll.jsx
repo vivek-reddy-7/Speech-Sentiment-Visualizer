@@ -1,16 +1,15 @@
 import { useEffect, useRef } from "react";
 
 function useAutoScroll(content) {
-    const panelRef = useRef(null);
+  const panelRef = useRef(null);
 
-    useEffect(() => {
-        const el = panelRef.current;
-        if (!el) return;
-        el.scrollTop = el.scrollHeight;
-    }, [content]);
+  useEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [content]);
 
-    return panelRef
+  return panelRef;
 }
 
-export {useAutoScroll};
-
+export { useAutoScroll };

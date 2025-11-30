@@ -21,9 +21,7 @@ export default function Controls({ isRecording, onStart, onStop }) {
 
       <div className="mic-status">
         <span className={`mic-dot ${isRecording ? "live" : "idle"}`} />
-        <span className="mic-text">
-          {isRecording ? "Listening…" : "Idle"}
-        </span>
+        <span className="mic-text">{isRecording ? "Listening…" : "Idle"}</span>
       </div>
     </div>
   );

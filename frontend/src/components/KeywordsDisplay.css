@@ -1,9 +1,7 @@
-
 .keywords-panel {
   max-height: 35vh;
   overflow: hidden;
 }
-
 
 .keywords-container {
   display: flex;

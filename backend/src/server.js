@@ -7,10 +7,9 @@ import OpenAI from "openai";
 dotenv.config();
 
 const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseURL: "https://api.groq.com/openai/v1"
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
 });
-
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -52,27 +51,24 @@ app.post("/process_text", async (req, res) => {
             """${text}"""
                 `.trim();
 
-
     const groqResponse = await client.responses.create({
-        model: process.env.OPENAI_MODEL,
-        input: [
-            {
-            role: "system",
-            content: "You output only JSON following the requested schema."
-            },
-            {
-            role: "user",
-            content: prompt
-            }
-        ]
+      model: process.env.OPENAI_MODEL,
+      input: [
+        {
+          role: "system",
+          content: "You output only JSON following the requested schema.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
     });
 
-
     const content =
-    groqResponse.output_text ||
-    groqResponse.output?.[0]?.content?.[1]?.text ||
-    "{}";
-
+      groqResponse.output_text ||
+      groqResponse.output?.[0]?.content?.[1]?.text ||
+      "{}";
 
     clearTimeout(timeout);
 
@@ -84,16 +80,18 @@ app.post("/process_text", async (req, res) => {
       console.error("Failed to parse model JSON:", e);
       return res.status(502).json({
         error: "Model did not return valid JSON",
-        raw: content
+        raw: content,
       });
     }
 
     const sentimentScore = Number(parsed.sentimentScore ?? 0);
-    const keywords = Array.isArray(parsed.keywords) ? parsed.keywords.map(String) : [];
+    const keywords = Array.isArray(parsed.keywords)
+      ? parsed.keywords.map(String)
+      : [];
 
     return res.json({
       sentimentScore,
-      keywords
+      keywords,
     });
   } catch (err) {
     if (axios.isCancel(err)) {
@@ -101,10 +99,13 @@ app.post("/process_text", async (req, res) => {
       return res.status(504).json({ error: "LLM provider timeout" });
     }
 
-    console.error("Error in /process_text:", err.response?.data || err.message || err);
+    console.error(
+      "Error in /process_text:",
+      err.response?.data || err.message || err
+    );
     return res.status(500).json({
       error: "Failed to process text",
-      details: err.response?.data || err.message
+      details: err.response?.data || err.message,
     });
   }
 });

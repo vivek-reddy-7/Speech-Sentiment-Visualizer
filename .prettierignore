@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+frontend/build/
+backend/dist/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Package locks
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

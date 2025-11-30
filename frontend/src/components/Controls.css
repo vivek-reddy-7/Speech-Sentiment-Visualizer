@@ -1,4 +1,3 @@
-
 .controls-bar {
   display: flex;
   align-items: center;
@@ -11,7 +10,6 @@
   pointer-events: auto;
 }
 
-
 .control-button {
   border: none;
   border-radius: 999px;
@@ -20,12 +18,14 @@
   font-weight: 600;
   cursor: pointer;
   color: #050608;
-  transition: transform 140ms ease-out, box-shadow 140ms ease-out,
+  transition:
+    transform 140ms ease-out,
+    box-shadow 140ms ease-out,
     background 140ms ease-out;
 }
 
 .control-button:active {
-  transform: scale(0.90);
+  transform: scale(0.9);
 }
 
 .btn-start {

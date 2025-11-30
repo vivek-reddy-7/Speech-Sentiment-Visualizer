@@ -1,15 +1,29 @@
-
 .transcript-panel {
   display: flex;
   flex-direction: column;
   max-height: 35vh;
   overflow-y: auto;
   scrollbar-width: none;
-}
-
-.transcript-text {
-  margin: 0;
   font-size: 14px;
   line-height: 1.4;
-  padding-right: 6px;
+}
+
+.trailing-text {
+  font-weight: bold;
+  animation: textFadeIn 750ms ease-in;
+}
+
+.placeholder-text {
+  opacity: 0.5;
+}
+
+@keyframes textFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(10px) scale(0.75);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
 }

@@ -15,16 +15,37 @@ function App() {
   const [transcript, setTranscript] = useState("");
   const [sentimentScore, setSentimentScore] = useState(0);
   const [keywords, setKeywords] = useState([]);
+  const [trailingTextLength, setTrailingTextLength] = useState(0);
 
   const socketRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const streamRef = useRef(null);
+  const dataHandlerRef = useRef(null);
+
+  const stopMediarecorder = () => {
+    if (mediaRecorderRef.current) {
+      try {
+        if (mediaRecorderRef.current.state !== "inactive") {
+          mediaRecorderRef.current.stop();
+        }
+      } catch (e) {
+        console.error("Error stopping MediaRecorder", e);
+        toast.error("Error stopping mic");
+      }
+    }
+  };
+
+  const stopMictracks = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
 
   const handleFinalTranscript = async (finalText) => {
-
     try {
       const response = await axios.post(`${BACKEND_URL}/process_text`, {
-        text: finalText
+        text: finalText,
       });
 
       const data = response.data;
@@ -37,50 +58,74 @@ function App() {
       }
     } catch (err) {
       console.error("Error calling /process_text:", err);
-      toast.error(`Error while parsing sentiment`);
+      if (err.response) {
+        const status = err.response.status;
+        const errorMsg = err.response.data?.error || "Unknown error";
+
+        switch (status) {
+          case 400:
+            toast.error("Invalid text input.");
+            break;
+          case 502:
+            toast.error(
+              "AI model returned invalid response. Please try again."
+            );
+            break;
+          case 504:
+            toast.error("AI model service timeout. Please try again.");
+            break;
+          case 500:
+            toast.error(`Backend error: ${errorMsg}`);
+            break;
+          default:
+            toast.error(`Server error (${status}): ${errorMsg}`);
+        }
+      } else if (err.request) {
+        toast.error("Cannot reach backend. Check your connection.");
+      } else {
+        toast.error("Failed to analyze sentiment. Please try again.");
+      }
     }
   };
 
   const startRecording = async () => {
     if (isRecording) return;
     if (!DEEPGRAM_API_KEY) {
-      console.error(
-        "Missing DEEPGRAM_API_KEY."
-      );
+      console.error("Missing DEEPGRAM_API_KEY.");
       return;
     }
 
     try {
       // Request mic access
-      const stream = await window.navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await window.navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
       streamRef.current = stream;
 
       // Create MediaRecorder for mic stream
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm"
+        mimeType: "audio/webm",
       });
       mediaRecorderRef.current = mediaRecorder;
 
       // Open WebSocket to Deepgram
-      const socket = new WebSocket(DEEPGRAM_URL, [
-        "token",
-        DEEPGRAM_API_KEY
-      ]);
+      const socket = new WebSocket(DEEPGRAM_URL, ["token", DEEPGRAM_API_KEY]);
       socketRef.current = socket;
+
+      const dataHandler = (event) => {
+        if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+          socket.send(event.data);
+        }
+      };
+
+      dataHandlerRef.current = dataHandler;
 
       socket.onopen = () => {
         console.log("Deepgram WebSocket connected");
         setIsRecording(true);
 
         // Send audio chunks every 250ms
-        mediaRecorder.addEventListener("dataavailable", (event) => {
-          if (
-            event.data.size > 0 &&
-            socket.readyState === WebSocket.OPEN
-          ) {
-            socket.send(event.data);
-          }
-        });
+        mediaRecorder.addEventListener("dataavailable", dataHandler);
 
         mediaRecorder.start(250);
       };
@@ -95,18 +140,16 @@ function App() {
           if (!text) return;
 
           setTranscript((prev) => {
-            // console.log(prev,text, "111")
-            return (prev + " " + text).trim()
+            return (prev + " " + text).trim();
           });
+          setTrailingTextLength(text.trim().length);
 
           if (isFinal) {
-            // console.log(text, 'final text')
             handleFinalTranscript(text);
           }
         } catch (e) {
           console.error("Error parsing Deepgram message:", e);
           toast.error(`Error parsing Deepgram transcript`);
-          
         }
       };
 
@@ -117,30 +160,44 @@ function App() {
 
       socket.onclose = (event) => {
         console.log("Deepgram WebSocket closed:", event.code, event.reason);
-        // Ensure recording state and media are cleaned up
-        setIsRecording(false);
-        if (mediaRecorderRef.current) {
-          try {
-            if (mediaRecorderRef.current.state !== "inactive") {
-              mediaRecorderRef.current.stop();
-            }
-          } catch (e) {
-            toast.error("Error stopping mic");
-          }
+
+        if (event.code !== 1000 && isRecording) {
+          toast.warning("Transcription service disconnected unexpectedly");
         }
-        if (streamRef.current) {
-          streamRef.current.getTracks().forEach((track) => track.stop());
-          streamRef.current = null;
+
+        // clean up recorder and stream
+        if (isRecording) {
+          setIsRecording(false);
         }
+
+        if (dataHandlerRef.current) {
+          mediaRecorderRef.current.removeEventListener(
+            "dataavailable",
+            dataHandlerRef.current
+          );
+          dataHandlerRef.current = null;
+        }
+
+        stopMediarecorder();
+        stopMictracks();
       };
     } catch (err) {
       console.error("Failed to start recording:", err);
-      toast.error("Failed to start recording");
-      
+
+      if (err.name === "NotAllowedError") {
+        toast.error("Microphone access denied. Please allow permissions.");
+      } else if (err.name === "NotFoundError") {
+        toast.error("No microphone found on your device.");
+      } else {
+        toast.error("Failed to start recording. Please try again.");
+      }
+
       setIsRecording(false);
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((track) => track.stop());
-        streamRef.current = null;
+      stopMictracks();
+
+      if (socketRef.current) {
+        socketRef.current.close();
+        socketRef.current = null;
       }
     }
   };
@@ -150,16 +207,6 @@ function App() {
 
     setIsRecording(false);
 
-    // Stop MediaRecorder
-    if (mediaRecorderRef.current) {
-      try {
-        if (mediaRecorderRef.current.state !== "inactive") {
-          mediaRecorderRef.current.stop();
-        }
-      } catch (e) {
-        console.warn("Error stopping MediaRecorder:", e);
-      }
-    }
 
     // Close WebSocket
     if (socketRef.current) {
@@ -172,11 +219,6 @@ function App() {
       }
     }
 
-    // Stop mic tracks
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
   };
 
   return (
@@ -187,7 +229,10 @@ function App() {
       />
 
       <div className="ui-overlay">
-        <TranscriptDisplay transcript={transcript} />
+        <TranscriptDisplay
+          transcript={transcript}
+          trailingTextLength={trailingTextLength}
+        />
         <KeywordsDisplay keywords={keywords} />
         <Controls
           isRecording={isRecording}
