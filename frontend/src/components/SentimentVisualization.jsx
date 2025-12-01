@@ -3,7 +3,7 @@ import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 function sketch(p5) {
   let sentimentScore = 0;
-  const NUM_PARTICLES = 2000;
+  const NUM_PARTICLES = 4000;      // increasing affects performance
   const particles = [];
   let noiseZ = 0;
 
@@ -35,7 +35,7 @@ function sketch(p5) {
       this.age++;
 
       // Reset particles that get too old to prevent permanent clustering
-      if (this.age > 500) {
+      if (this.age > 5000) {
         this.pos.x = p5.random(p5.width);
         this.pos.y = p5.random(p5.height);
         this.prev.set(this.pos);

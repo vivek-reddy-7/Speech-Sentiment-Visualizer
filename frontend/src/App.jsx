@@ -124,10 +124,10 @@ function App() {
         console.log("Deepgram WebSocket connected");
         setIsRecording(true);
 
-        // Send audio chunks every 250ms
+        // Send audio chunks every 2000ms
         mediaRecorder.addEventListener("dataavailable", dataHandler);
 
-        mediaRecorder.start(250);
+        mediaRecorder.start(2000);
       };
 
       socket.onmessage = (message) => {
