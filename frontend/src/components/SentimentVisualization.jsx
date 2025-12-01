@@ -3,7 +3,7 @@ import { ReactP5Wrapper } from "@p5-wrapper/react";
 
 function sketch(p5) {
   let sentimentScore = 0;
-  const NUM_PARTICLES = 4000;      // increasing affects performance
+  const NUM_PARTICLES = 4000; // increasing affects performance
   const particles = [];
   let noiseZ = 0;
 

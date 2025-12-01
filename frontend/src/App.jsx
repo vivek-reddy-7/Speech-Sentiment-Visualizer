@@ -139,12 +139,11 @@ function App() {
 
           if (!text) return;
 
-          setTranscript((prev) => {
-            return (prev + " " + text).trim();
-          });
-          setTrailingTextLength(text.trim().length);
-
           if (isFinal) {
+            setTranscript((prev) => {
+              return (prev + " " + text).trim();
+            });
+            setTrailingTextLength(text.trim().length);
             handleFinalTranscript(text);
           }
         } catch (e) {
@@ -207,7 +206,6 @@ function App() {
 
     setIsRecording(false);
 
-
     // Close WebSocket
     if (socketRef.current) {
       try {
@@ -218,7 +216,6 @@ function App() {
         console.warn("Error closing WebSocket:", e);
       }
     }
-
   };
 
   return (

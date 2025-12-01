@@ -30,9 +30,7 @@ export default function TranscriptDisplay({ transcript, trailingTextLength }) {
       ref={transcriptPanelRef}
     >
       <h2 className="panel-title">Live Transcript</h2>
-      {transcriptMain && (
-        <span>{transcriptMain}</span>
-      )}
+      {transcriptMain && <span>{transcriptMain}</span>}
       {trailingText && (
         <span key={trailingKey} className="trailing-text">
           {trailingText}
