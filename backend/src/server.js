@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import axios from "axios";
 import OpenAI from "openai";
 
 dotenv.config();
@@ -9,6 +8,7 @@ dotenv.config();
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   baseURL: "https://api.groq.com/openai/v1",
+  timeout: Number(process.env.API_TIMEOUT),
 });
 
 const app = express();
@@ -34,10 +34,6 @@ app.post("/process_text", async (req, res) => {
   }
 
   try {
-    const controller = new AbortController();
-    const timeoutMs = Number(process.env.API_TIMEOUT);
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
-
     const prompt = `
             You are a sentiment and keyword analysis service.
 
@@ -70,8 +66,6 @@ app.post("/process_text", async (req, res) => {
       groqResponse.output?.[0]?.content?.[1]?.text ||
       "{}";
 
-    clearTimeout(timeout);
-
     //reponse format check
     let parsed;
     try {
@@ -94,7 +88,7 @@ app.post("/process_text", async (req, res) => {
       keywords,
     });
   } catch (err) {
-    if (axios.isCancel(err)) {
+    if (err instanceof OpenAI.APIConnectionTimeoutError) {
       console.error("OpenAI request timed out");
       return res.status(504).json({ error: "LLM provider timeout" });
     }

@@ -44,9 +44,15 @@ function App() {
 
   const handleFinalTranscript = async (finalText) => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/process_text`, {
-        text: finalText,
-      });
+      const response = await axios.post(
+        `${BACKEND_URL}/process_text`,
+        {
+          text: finalText,
+        },
+        {
+          timeout: 4000,
+        }
+      );
 
       const data = response.data;
       setSentimentScore(
@@ -58,6 +64,14 @@ function App() {
       }
     } catch (err) {
       console.error("Error calling /process_text:", err);
+
+      if (err.code === "ECONNABORTED") {
+        toast.error(
+          "The server took too long to respond. Skipping a few words."
+        );
+        return;
+      }
+
       if (err.response) {
         const status = err.response.status;
         const errorMsg = err.response.data?.error || "Unknown error";
@@ -68,11 +82,11 @@ function App() {
             break;
           case 502:
             toast.error(
-              "AI model returned invalid response. Please try again."
+              "AI model returned invalid response. Skipping a few words."
             );
             break;
           case 504:
-            toast.error("AI model service timeout. Please try again.");
+            toast.error("AI model service timeout. Skipping a few words.");
             break;
           case 500:
             toast.error(`Backend error: ${errorMsg}`);
@@ -220,10 +234,7 @@ function App() {
 
   return (
     <div className="app-root">
-      <SentimentVisualization
-        sentimentScore={sentimentScore}
-        keywords={keywords}
-      />
+      <SentimentVisualization sentimentScore={sentimentScore} />
 
       <div className="ui-overlay">
         <TranscriptDisplay
